@@ -22,8 +22,8 @@ from art.metrics.metrics import clever_u
 from tqdm import tqdm
 
 from autoattack import AutoAttack
-from ray import tune
-from ray.tune import CLIReporter
+# from ray import tune
+# from ray.tune import CLIReporter
 
 from pretrained.resnet import resnet18, resnet50
 
@@ -115,8 +115,8 @@ def run_trial(
     set_seeds(params['seed'])
     # device
     use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    print(f'Using GPU: {use_cuda}')
+    device = torch.device(f"cuda:{batch_id}" if use_cuda else "cpu")
+    print(f'Using GPU {batch_id}: {use_cuda}')
 
     """ MODEL """
     #Load Model
@@ -160,21 +160,14 @@ def run_trial(
 
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
-    save_tag = ''
-    if config.get('batch_id'):
-        batch_id=config['batch_id']
-        id_to_run=params['id_to_run']
-        size = len(test_set)//params['n_batches'] + 1 # math.ceil
-        indices=np.arange(len(test_set))
-        if id_to_run < 0: #run all mode
-            batch_indices = indices[batch_id*size:(batch_id+1)*size]
-            save_tag = f'{batch_id}'
-        else:
-            size1 = size//params['n_batches'] + 1
-            batch_indices = indices[:size][batch_id*size1:(batch_id+1)*size1]
-            save_tag = f'{id_to_run}_{batch_id}'
-        test_set = torch.utils.data.dataset.Subset(test_set,batch_indices)
-        print(f'batch {batch_id} from {batch_indices[0]} to {batch_indices[-1]}...')
+    
+    batch_id=params['batch_id']
+    size = len(test_set)//params['n_batches'] + 1 # math.ceil
+    indices=np.arange(len(test_set))
+    batch_indices = indices[batch_id*size:(batch_id+1)*size]
+    save_tag = f'{batch_id}'
+    test_set = torch.utils.data.dataset.Subset(test_set,batch_indices)
+    print(f'batch {batch_id} from {batch_indices[0]} to {batch_indices[-1]}...')
 
 
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=params['batch_size'],
@@ -299,27 +292,7 @@ def run_experiment(params: dict, args: argparse.Namespace) -> None:
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     gpus_per_trial = 1 if use_cuda else 0
-    if not params.get('n_batches'):
-       run_trial(config=config, params=params, args=args, num_gpus=gpus_per_trial)
-    else:
-        config = {
-            "batch_id": tune.grid_search(list(np.arange(params['n_batches']))),
-            "model_name": params['model_name']
-        }
-        reporter = CLIReporter(
-            parameter_columns=["model_name", "batch_id"],
-            # metric_columns=["round"],
-        )
-        tune.run(
-            tune.with_parameters(
-                run_trial, params=params, args=args, num_gpus=gpus_per_trial
-            ),
-            resources_per_trial={
-                "cpu": args.cpus_per_trial, "gpu": gpus_per_trial},
-            config=config,
-            progress_reporter=reporter,
-            name=args.project_name,
-        )
+    run_trial(config=config, params=params, args=args, num_gpus=gpus_per_trial)
 
 def main(args: list) -> None:
     """Parse command line args, load training params, and initiate training.
