@@ -104,6 +104,7 @@ def run_trial(
     """
 
     #
+    batch_id=params['batch_id']
     norm_thread = params['norm_thread']
     model_name = params['model_name']
     root= params['results_root_path']
@@ -161,7 +162,6 @@ def run_trial(
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
     
-    batch_id=params['batch_id']
     size = len(test_set)//params['n_batches'] + 1 # math.ceil
     indices=np.arange(len(test_set))
     batch_indices = indices[batch_id*size:(batch_id+1)*size]
