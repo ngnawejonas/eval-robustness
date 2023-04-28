@@ -180,11 +180,13 @@ def run_trial(
     if params['attack'] =='cw':
         adv_acc, adversarial = cw_attack(model, test_loader, device,minpixel=minpixel, maxpixel=maxpixel)
         torch.save(adversarial, os.path.join(resultsDirName,f'adverserial{save_tag}.pt'))
+        write_adv_acc(adv_acc, resultsDirName, save_tag)
 
     elif params['attack'] =='fab':
         adv_acc, adversarial, y_adversarial = fab_attack(model, test_loader, norm_thread, device)
         torch.save(adversarial, os.path.join(resultsDirName,f'fab_adverserial{save_tag}.pt'))
         torch.save(adversarial, os.path.join(resultsDirName,f'fab_y_adverserial{save_tag}.pt'))
+        write_adv_acc(adv_acc, resultsDirName, save_tag)
     elif params['attack'] == 'clever':
         clever_scores =   get_clever_scores(model, test_loader,  norm_thread, device, minpixel=minpixel, maxpixel=maxpixel)
         torch.save(clever_scores, os.path.join(resultsDirName,f'clever_scores{save_tag}.pt'))
@@ -193,6 +195,9 @@ def run_trial(
         raise NotImplementedError
 
 
+
+
+def write_adv_acc(adv_acc, resultsDirName, save_tag):
     print(f'adv acc: {100*adv_acc:.2f}%')
     with open(os.path.join(resultsDirName,f'result{save_tag}.txt'), "w") as f:
         f.write(f"Adverserial accuracy (batch {save_tag}): {adv_acc}")
