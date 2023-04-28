@@ -132,7 +132,7 @@ def run_trial(
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
     advlist = []
-    for i in params['n_batches']:
+    for i in range(params['n_batches']):
         adv =torch.load(f"{root}/{model_name}/{params['attack']}_adverserial{i}.pt")
         advlist.append(adv)
     adv=torch.cat(advlist)
