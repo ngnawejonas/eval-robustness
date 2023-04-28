@@ -143,7 +143,7 @@ def run_trial(
     # my_dataset1 = torch.utils.data.dataset.TensorDataset(original, targets)
     # my_dataset2 = torch.utils.data.dataset.TensorDataset(adv)
 
-    my_dataset = torch.utils.data.dataset.TensorDataset(original, adv, targets)
+    my_dataset = torch.utils.data.dataset.TensorDataset(original, adv.cpu(), targets)
     # test_loader1 = torch.utils.data.DataLoader(my_dataset, batch_size=params['batch_size'],
     #                                         shuffle=False, num_workers=1)
     
