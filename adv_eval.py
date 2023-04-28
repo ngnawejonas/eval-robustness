@@ -169,8 +169,8 @@ def run_trial(
     test_set = torch.utils.data.dataset.Subset(test_set,batch_indices)
     print(f'batch {batch_id} from {batch_indices[0]} to {batch_indices[-1]}...')
 
-
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=params['batch_size'],
+    batch_size = 1 if params['attack'].lower()=='clever' else params['batch_size'] #
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
                                             shuffle=False, num_workers=1)
 
 
