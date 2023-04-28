@@ -140,16 +140,8 @@ def run_trial(
     original= torch.stack([transform(img) for img in test_set.data])
     targets = torch.Tensor(test_set.targets)
     print(original.shape, adv.shape)
-    # my_dataset1 = torch.utils.data.dataset.TensorDataset(original, targets)
-    # my_dataset2 = torch.utils.data.dataset.TensorDataset(adv)
 
     my_dataset = torch.utils.data.dataset.TensorDataset(original, adv.cpu(), targets)
-    # test_loader1 = torch.utils.data.DataLoader(my_dataset, batch_size=params['batch_size'],
-    #                                         shuffle=False, num_workers=1)
-    
-    # test_loader2 = torch.utils.data.DataLoader(my_dataset2, batch_size=params['batch_size'],
-    #                                         shuffle=False, num_workers=1)
-
 
     acc, adv_acc, adv_failure, df  = eval(model, my_dataset, device, params)
 
@@ -181,16 +173,9 @@ def eval(model, my_dataset, device, params):
     total=0
     df_list=[]
 
-    # iterloader1 = iter(loader1)
-    # iterloader2 = iter(loader2)
-
     loader = torch.utils.data.DataLoader(my_dataset, batch_size=params['batch_size'],
                                             shuffle=False, num_workers=1)
     for images, adv_images, target in tqdm(loader):
-    # for i in range(len(loader1)):
-        # images, adv_images, target = images.to(device), adv_images.to(device), target.to(device)
-        # images , adv_images, target,  = next(iterloader1)
-        # adv_images = next(iterloader2)
         images, adv_images, target = images.to(device), adv_images.to(device), target.to(device)
         with torch.no_grad():
             out = model(images)

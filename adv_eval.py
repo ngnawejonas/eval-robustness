@@ -116,8 +116,8 @@ def run_trial(
     set_seeds(params['seed'])
     # device
     use_cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda:{batch_id}" if use_cuda else "cpu")
-    print(f'Using GPU {batch_id}: {use_cuda}')
+    device = torch.device(f"cuda" if use_cuda else "cpu")
+    print(f'Using GPU : {use_cuda}')
 
     """ MODEL """
     #Load Model
