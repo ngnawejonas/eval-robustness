@@ -23,6 +23,8 @@ from autoattack import AutoAttack
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from pretrained.resnet import resnet18, resnet50
+
 def parse_args(args: list) -> argparse.Namespace:
     """Parse command line parameters.
 
@@ -108,24 +110,32 @@ def run_trial(
 
     """ MODEL """
     #Load Model
-    model = load_model(model_name=params['model_name'], dataset=params['dataset_name'], threat_model=params['norm_thread'])
+    if model_name.lower() == 'resnet18':
+        model = resnet18(pretrained=True)
+    elif model_name.lower() == 'resnet50':
+        model = resnet50(pretrained=True)
+    else:
+        model = load_model(model_name=params['model_name'], dataset=params['dataset_name'], threat_model=params['norm_thread'])
     model = model.to(device)
     model.eval()
     print("Model Loaded")
-    print(model)
-
     """# Dataset"""
 
     #@title cifar10
-    transform = transforms.Compose([transforms.ToTensor(),])
-  
+    # Normalize the images by the imagenet mean/std since the nets are pretrained
+    if model_name.lower().startswith('resnet'):
+         data_normalize = transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2471, 0.2435, 0.2616])
+         transform = transforms.Compose([transforms.ToTensor(), data_normalize])
+    else:
+        transform = transforms.Compose([transforms.ToTensor(),])
 
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
-
-    adv0=torch.load("results/Wang2023Better_WRN-28-10_L2/adverserial0.pt")
-    adv1=torch.load("results/Wang2023Better_WRN-28-10_L2/adverserial1.pt")
-    adv=torch.cat([adv0,adv1])
+    advlist = []
+    for i in params['n_batches']:
+        adv =torch.load(f"{root}/{model_name}/{params['attack']}_adverserial{i}.pt")
+        advlist.append(adv)
+    adv=torch.cat(advlist)
 
     original= torch.stack([transform(img) for img in test_set.data])
     targets = torch.Tensor(test_set.targets)
@@ -134,17 +144,17 @@ def run_trial(
     test_loader = torch.utils.data.DataLoader(my_dataset, batch_size=params['batch_size'],
                                             shuffle=False, num_workers=1)
 
-    acc, adv_acc, adv_failure, df  = eval(model, test_loader, device)
+    acc, adv_acc, adv_failure, df  = eval(model, test_loader, device, params)
 
     df["(Acc,Adv Acc, Adv)"]=df[["Acc", "Adv Acc","Adv"]].apply(tuple, axis=1)
     df.to_csv(os.path.join(resultsDirName,f'results.csv'))
     import plotly.express as px
 
-    fig=px.scatter(df,x="Entropy", y="CW norm", color="(Acc,Adv Acc, Adv)")
+    fig=px.scatter(df,x="Entropy", y=f"{params['attack']} norm", color="(Acc,Adv Acc, Adv)")
     fig.write_html(os.path.join(resultsDirName,f'CW_vs_ENtropy.html'))
 
     df_adv=df[df["Adv"]==True]
-    spearman=df_adv[["Entropy","CW norm"]].corr("spearman")
+    spearman=df_adv[["Entropy",f"{params['attack']} norm"]].corr("spearman")
     print(spearman)
     print(spearman.iloc[0,1])
     print(f'adv acc: {100*adv_acc:.2f}%')
@@ -152,10 +162,10 @@ def run_trial(
         wf.write(f"Accuracy: {acc} \n")
         wf.write(f"Adverserial accuracy: {adv_acc}\n")
         wf.write(f"Adverserial failure: {adv_failure}\n")
-        wf.write(f"Spearman correlation Entropy vs CW norm (adverserial only): {spearman.iloc[0,1]}\n")
+        wf.write(f"Spearman correlation Entropy vs {params['attack']} norm (adverserial only): {spearman.iloc[0,1]}\n")
         wf.close()
 
-def eval(model, loader, device):
+def eval(model, loader, device, params):
     correct=0
     correct_adv=0
     constant=0
@@ -185,7 +195,7 @@ def eval(model, loader, device):
             adv_acc =(y_adv == target).cpu().numpy()
             adv = (y != y_adv).cpu().numpy()
             df_list+=zip(entropy.cpu().numpy(), norm.cpu().numpy(), acc, adv_acc ,adv )
-    df=pd.DataFrame(df_list, columns=["Entropy", "CW norm", "Acc", "Adv Acc", "Adv"])
+    df=pd.DataFrame(df_list, columns=["Entropy", f"{params['attack']} norm", "Acc", "Adv Acc", "Adv"])
     return correct/total, correct_adv/total, constant/total, df
 
 def run_experiment(params: dict, args: argparse.Namespace) -> None:
