@@ -140,18 +140,18 @@ def run_trial(
     original= torch.stack([transform(img) for img in test_set.data])
     targets = torch.Tensor(test_set.targets)
     print(original.shape, adv.shape)
-    my_dataset1 = torch.utils.data.dataset.TensorDataset(original, targets)
-    my_dataset2 = torch.utils.data.dataset.TensorDataset(adv)
+    # my_dataset1 = torch.utils.data.dataset.TensorDataset(original, targets)
+    # my_dataset2 = torch.utils.data.dataset.TensorDataset(adv)
 
-    # my_dataset = torch.utils.data.dataset.TensorDataset(original, adv, targets)
-    test_loader1 = torch.utils.data.DataLoader(my_dataset1, batch_size=params['batch_size'],
+    my_dataset = torch.utils.data.dataset.TensorDataset(original, adv, targets)
+    test_loader1 = torch.utils.data.DataLoader(my_dataset, batch_size=params['batch_size'],
                                             shuffle=False, num_workers=1)
     
-    test_loader2 = torch.utils.data.DataLoader(my_dataset2, batch_size=params['batch_size'],
-                                            shuffle=False, num_workers=1)
+    # test_loader2 = torch.utils.data.DataLoader(my_dataset2, batch_size=params['batch_size'],
+    #                                         shuffle=False, num_workers=1)
 
 
-    acc, adv_acc, adv_failure, df  = eval(model, test_loader1, test_loader2, device, params)
+    acc, adv_acc, adv_failure, df  = eval(model, test_loader1, device, params)
 
     df["(Acc,Adv Acc, Adv)"]=df[["Acc", "Adv Acc","Adv"]].apply(tuple, axis=1)
     df.to_csv(os.path.join(resultsDirName,f'results.csv'))
@@ -172,7 +172,7 @@ def run_trial(
         wf.write(f"Spearman correlation Entropy vs {params['attack']} norm (adverserial only): {spearman.iloc[0,1]}\n")
         wf.close()
 
-def eval(model, loader1, loader2, device, params):
+def eval(model, loader1, device, params):
     correct=0
     correct_adv=0
     constant=0
@@ -182,12 +182,12 @@ def eval(model, loader1, loader2, device, params):
     df_list=[]
 
     iterloader1 = iter(loader1)
-    iterloader2 = iter(loader2)
+    # iterloader2 = iter(loader2)
     # for images, adv_images, target in tqdm(loader):
     for i in range(len(loader1)):
         # images, adv_images, target = images.to(device), adv_images.to(device), target.to(device)
-        images , target = next(iterloader1)
-        adv_images = next(iterloader2)
+        images , adv_images, target,  = next(iterloader1)
+        # adv_images = next(iterloader2)
         images, adv_images, target = images.to(device), adv_images.to(device), target.to(device)
         with torch.no_grad():
             out = model(images)
