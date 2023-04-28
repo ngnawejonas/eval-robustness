@@ -186,7 +186,7 @@ def run_trial(
         torch.save(adversarial, os.path.join(resultsDirName,f'fab_adverserial{save_tag}.pt'))
         torch.save(adversarial, os.path.join(resultsDirName,f'fab_y_adverserial{save_tag}.pt'))
     elif params['attack'] == 'clever':
-        clever_scores =   clever_scores(model, test_loader,  norm_thread, device, minpixel=minpixel, maxpixel=maxpixel)
+        clever_scores =   get_clever_scores(model, test_loader,  norm_thread, device, minpixel=minpixel, maxpixel=maxpixel)
         torch.save(clever_scores, os.path.join(resultsDirName,f'clever_scores{save_tag}.pt'))
     else:
         # adv_acc = autoattack(model, test_loader, params['norm_thread'], device)
@@ -232,7 +232,7 @@ def fab_attack(model, test_loader, norm_thread, device):
     acc = (y_test == y_adv).sum().item() / len(y_test)
     return acc, x_adv, y_adv
 
-def clever_scores(model, test_loader,  norm_thread, device, minpixel=0., maxpixel=1.0):
+def get_clever_scores(model, test_loader,  norm_thread, device, minpixel=0., maxpixel=1.0):
     clever_args={'min_pixel_value':  minpixel,
                 'max_pixel_value': maxpixel,
                 'nb_batches':100,
