@@ -22,6 +22,7 @@ from art.metrics.metrics import clever_u
 from tqdm import tqdm
 
 from autoattack import AutoAttack
+from model import ResNetXNormed
 # from ray import tune
 # from ray.tune import CLIReporter
 
@@ -123,8 +124,10 @@ def run_trial(
     #Load Model
     if model_name.lower() == 'resnet18':
         model = resnet18(pretrained=True)
+        model = ResNetXNormed(model)
     elif model_name.lower() == 'resnet50':
         model = resnet50(pretrained=True)
+        model = ResNetXNormed(model)
     else:
         model = load_model(model_name=params['model_name'], dataset=params['dataset_name'], threat_model=params['norm_thread'])
     model = model.to(device)
@@ -134,17 +137,18 @@ def run_trial(
 
     #@title cifar10
     # Normalize the images by the imagenet mean/std since the nets are pretrained
-    if model_name.lower().startswith('resnet'):
-         data_normalize = transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2471, 0.2435, 0.2616])
-         transform = transforms.Compose([transforms.ToTensor(), data_normalize])
-         zeros = torch.zeros((3,32,32))
-         ones = torch.ones_like(zeros)
-         minpixel = data_normalize(zeros).min().item()
-         maxpixel = data_normalize(ones).max().item() 
-    else:
-        transform = transforms.Compose([transforms.ToTensor(),])
-        minpixel = 0.
-        maxpixel = 1.
+    # if model_name.lower().startswith('resnet'):
+    #      data_normalize = transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2471, 0.2435, 0.2616])
+    #      transform = transforms.Compose([transforms.ToTensor(), data_normalize])
+    #      zeros = torch.zeros((3,32,32))
+    #      ones = torch.ones_like(zeros)
+    #      minpixel = data_normalize(zeros).min().item()
+    #      maxpixel = data_normalize(ones).max().item() 
+    # else:
+    
+    transform = transforms.Compose([transforms.ToTensor(),])
+    minpixel = 0.
+    maxpixel = 1.
 
     # dataset = torchvision.datasets.CIFAR10(root='./data', train=True,
     #                                         download=True, transform=transform)
