@@ -1,17 +1,17 @@
 seed: 1380
 
-model_name: Standard # or Standard|Wang2023Better_WRN-28-10|ResNet50, ResNet18
+model_name: ResNet18   # or Standard|Wang2023Better_WRN-28-10|ResNet50, ResNet18
 
 norm_thread: L2 # or Linf
 
 dataset_name: cifar10
 
-batch_size: 32 # put a value that gpu memory can bear
+batch_size: 128 # put a value that gpu memory can bear
 
 attack: fab #rreplace with 'autoattack' for auto-attack
 
 results_root_path: . # a folder path to save the results
 
-n_batches: 3
+n_batches: 1
 
 batch_id: 0

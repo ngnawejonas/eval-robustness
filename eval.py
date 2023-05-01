@@ -22,6 +22,7 @@ from autoattack import AutoAttack
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from model import ResNetXNormed
 
 from pretrained.resnet import resnet18, resnet50
 
@@ -108,12 +109,13 @@ def run_trial(
     device = torch.device("cuda" if use_cuda else "cpu")
     print(f'Using GPU: {use_cuda}')
 
-    """ MODEL """
     #Load Model
     if model_name.lower() == 'resnet18':
         model = resnet18(pretrained=True)
+        model = ResNetXNormed(model)
     elif model_name.lower() == 'resnet50':
         model = resnet50(pretrained=True)
+        model = ResNetXNormed(model)
     else:
         model = load_model(model_name=params['model_name'], dataset=params['dataset_name'], threat_model=params['norm_thread'])
     model = model.to(device)
@@ -133,7 +135,7 @@ def run_trial(
                                         download=True, transform=transform)
     advlist = []
     for i in range(params['n_batches']):
-        adv =torch.load(f"{root}/{model_name}_{norm_thread}/{params['attack']}_adverserial{i}.pt")
+        adv =torch.load(f"{root}/{model_name}_{norm_thread}/{params['attack']}_adverserial{i}.pt", map_location=device)
         advlist.append(adv)
     adv=torch.cat(advlist)
 
