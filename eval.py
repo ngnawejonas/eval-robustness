@@ -125,11 +125,14 @@ def run_trial(
 
     #@title cifar10
     # Normalize the images by the imagenet mean/std since the nets are pretrained
-    if model_name.lower().startswith('resnet'):
-         data_normalize = transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2471, 0.2435, 0.2616])
-         transform = transforms.Compose([transforms.ToTensor(), data_normalize])
-    else:
-        transform = transforms.Compose([transforms.ToTensor(),])
+    # if model_name.lower().startswith('resnet'):
+    #      data_normalize = transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2471, 0.2435, 0.2616])
+    #      transform = transforms.Compose([transforms.ToTensor(), data_normalize])
+    # else:
+    #     transform = transforms.Compose([transforms.ToTensor(),])
+    transform = transforms.Compose([transforms.ToTensor(),])
+    # minpixel = 0.
+    # maxpixel = 1.
 
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
