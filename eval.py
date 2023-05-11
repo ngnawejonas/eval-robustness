@@ -185,7 +185,8 @@ def eval(model, my_dataset, device, params):
         with torch.no_grad():
             out = model(images)
             out_adv = model(adv_images)
-            entropy=torch.special.entr(torch.softmax(out,1)).sum(1)
+            entropy = torch.special.entr(torch.softmax(out,1)).sum(1)
+            adv_entropy = torch.special.entr(torch.softmax(out_adv,1)).sum(1)
             norm = torch.linalg.vector_norm(images.flatten(1) - adv_images.flatten(1),ord=2,dim=1)
             # print(entropy.shape)
             # print(norm.shape)
@@ -201,8 +202,8 @@ def eval(model, my_dataset, device, params):
             acc =(y == target).cpu().numpy()
             adv_acc =(y_adv == target).cpu().numpy()
             adv = (y != y_adv).cpu().numpy()
-            df_list+=zip(entropy.cpu().numpy(), norm.cpu().numpy(), acc, adv_acc ,adv )
-    df=pd.DataFrame(df_list, columns=["Entropy", f"{params['attack']} norm", "Acc", "Adv Acc", "Adv"])
+            df_list+=zip(entropy.cpu().numpy(), adv_entropy.cpu().numpy(), norm.cpu().numpy(), acc, adv_acc ,adv )
+    df=pd.DataFrame(df_list, columns=["Entropy", "Adv Entropy", f"{params['attack']} norm", "Acc", "Adv Acc", "Adv"])
     return correct/total, correct_adv/total, constant/total, df
 
 def run_experiment(params: dict, args: argparse.Namespace) -> None:
